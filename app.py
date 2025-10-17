@@ -2,12 +2,13 @@ import streamlit as st
 import cv2
 import numpy as np
 import math
-from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
 
+# Page setup
 st.set_page_config(page_title="Finger Counting", layout="centered")
 st.title("🖐️ Live Finger Counting via Camera")
 
-# HSV sliders
+# HSV sliders in sidebar
 st.sidebar.header("🎨 HSV Range")
 l_h = st.sidebar.slider("Lower H", 0, 255, 0)
 l_s = st.sidebar.slider("Lower S", 0, 255, 30)
@@ -16,6 +17,12 @@ u_h = st.sidebar.slider("Upper H", 0, 255, 20)
 u_s = st.sidebar.slider("Upper S", 0, 255, 255)
 u_v = st.sidebar.slider("Upper V", 0, 255, 255)
 
+# STUN server config for WebRTC
+rtc_config = RTCConfiguration({
+    "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+})
+
+# Finger counting logic
 class FingerCounter(VideoTransformerBase):
     def transform(self, frame):
         img = frame.to_ndarray(format="bgr24")
@@ -59,5 +66,9 @@ class FingerCounter(VideoTransformerBase):
                     cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 0, 0), 3)
         return img
 
-# Start camera
-webrtc_streamer(key="finger-counter", video_transformer_factory=FingerCounter)
+# Start webcam stream
+webrtc_streamer(
+    key="finger-counter",
+    video_transformer_factory=FingerCounter,
+    rtc_configuration=rtc_config
+)
